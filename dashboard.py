@@ -74,8 +74,8 @@ def detections():
             'waste_type'     : doc.get('waste_type', 'N/A'),
             'bin_label'      : doc.get('bin_label', 'N/A'),
             'is_correct'     : doc.get('is_correct', False),
-            'photo1'         : doc.get('photo1_path', ''),
-            'photo2'         : doc.get('photo2_path', ''),
+            'photo1'         : doc.get('photo1_url', doc.get('photo1_path', '')),
+            'photo2'         : doc.get('photo2_url', doc.get('photo2_path', '')),
         })
     return jsonify(result)
 
