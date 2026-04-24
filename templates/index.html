@@ -550,7 +550,7 @@
       feedMeta.textContent = `Showing latest ${Math.min(data.length, 10)}`;
       feedGrid.innerHTML = data.slice(0, 10).map(d => {
         const imgSrc = d.photo1
-          ? `/captures/${d.photo1.replace('captures/', '')}`
+          ? (d.photo1.startsWith('http') ? d.photo1 : `/captures/${d.photo1.replace('captures/', '')}`)
           : '';
         const imgHtml = imgSrc
           ? `<img src="${imgSrc}" alt="${d.detected_label}" loading="lazy">`
