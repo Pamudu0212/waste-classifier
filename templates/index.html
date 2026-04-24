@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waste Classifier Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg       : #F8F9FA;
+      --surface  : #FFFFFF;
+      --border   : #E9ECEF;
+      --text     : #212529;
+      --muted    : #6C757D;
+      --accent   : #2563EB;
+      --green    : #16A34A;
+      --red      : #DC2626;
+      --radius   : 12px;
+      --shadow   : 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px;
+    }
+
+    /* ── STAT CARDS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 600;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.blue  { color: var(--accent); }
+
+    /* ── CHARTS ROW ── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+    }
+
+    /* ── BIN BARS ── */
+    .bin-bars { display: flex; flex-direction: column; gap: 12px; }
+
+    .bin-row { display: flex; flex-direction: column; gap: 4px; }
+
+    .bin-row-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .bin-name { font-weight: 500; }
+    .bin-count { color: var(--muted); font-family: 'DM Mono', monospace; }
+
+    .bin-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .bin-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.6s ease;
+    }
+
+    /* ── LATEST FEED ── */
+    .feed-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .feed-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feed-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .feed-img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .feed-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .feed-info {
+      padding: 10px 12px;
+    }
+
+    .feed-label {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .feed-conf {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .feed-bin {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .correct-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 3px;
+    }
+
+    .correct-dot.yes { background: var(--green); }
+    .correct-dot.no  { background: var(--red); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .badge-correct { background: #DCFCE7; color: #166534; }
+    .badge-wrong   { background: #FEE2E2; color: #991B1B; }
+
+    .conf-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .conf-high { color: var(--green); }
+    .conf-mid  { color: #D97706; }
+    .conf-low  { color: var(--red); }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 60px;
+      color: var(--muted);
+    }
+
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .section-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .charts-row { grid-template-columns: 1fr; }
+      .feed-grid  { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">♻️</div>
+    Waste Classifier
+  </div>
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    Live — updates every 5s
+  </div>
+</header>
+
+<main>
+
+  <!-- STAT CARDS -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-label">Total Detections</div>
+      <div class="stat-value blue" id="statTotal">—</div>
+      <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Correct Classifications</div>
+      <div class="stat-value green" id="statCorrect">—</div>
+      <div class="stat-sub" id="statAccSub">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Accuracy</div>
+      <div class="stat-value" id="statAccuracy">—</div>
+      <div class="stat-sub">Classification accuracy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Most Common</div>
+      <div class="stat-value" id="statCommon" style="font-size:24px;">—</div>
+      <div class="stat-sub" id="statCommonSub">—</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-title">Detections by Waste Type</div>
+      <canvas id="typeChart" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Bin Distribution</div>
+      <div class="bin-bars" id="binBars">
+        <div class="empty"><div class="empty-text">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LATEST FEED -->
+  <div class="section-header">
+    <div class="section-title">Latest Captures</div>
+    <div class="section-meta" id="feedMeta"></div>
+  </div>
+  <div class="feed-grid" id="feedGrid">
+    <div class="empty" style="grid-column: 1/-1">
+      <div class="empty-icon">📷</div>
+      <div class="empty-text">No captures yet — throw some waste!</div>
+    </div>
+  </div>
+
+  <!-- HISTORY TABLE -->
+  <div class="section-header" style="margin-top: 8px;">
+    <div class="section-title">Detection History</div>
+    <div class="section-meta">Last 20 detections</div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Object</th>
+            <th>Confidence</th>
+            <th>Bin</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <tr><td colspan="5" class="empty"><div class="empty-text">No data yet</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  let typeChart = null;
+
+  function confClass(c) {
+    if (c >= 80) return 'conf-high';
+    if (c >= 50) return 'conf-mid';
+    return 'conf-low';
+  }
+
+  function wasteEmoji(label) {
+    const map = {
+      'Plastic': '🧴', 'Paper': '📄', 'Glass': '🍾',
+      'Metal': '🥫', 'Organic': '🌿', 'Organics': '🌿'
+    };
+    return map[label] || '🗑️';
+  }
+
+  async function loadStats() {
+    const res  = await fetch('/api/stats');
+    const data = await res.json();
+
+    document.getElementById('statTotal').textContent   = data.total;
+    document.getElementById('statCorrect').textContent = data.correct;
+    document.getElementById('statAccuracy').textContent = data.accuracy + '%';
+    document.getElementById('statAccSub').textContent  = data.accuracy + '% accuracy';
+
+    // most common label
+    const labels = data.label_counts;
+    if (Object.keys(labels).length > 0) {
+      const top = Object.entries(labels).sort((a,b) => b[1]-a[1])[0];
+      document.getElementById('statCommon').textContent    = wasteEmoji(top[0]) + ' ' + top[0];
+      document.getElementById('statCommonSub').textContent = top[1] + ' detections';
+    }
+
+    // bin bars
+    const binBars  = document.getElementById('binBars');
+    const binCounts = data.bin_counts;
+    const maxCount  = Math.max(...Object.values(binCounts), 1);
+
+    if (Object.keys(binCounts).length === 0) {
+      binBars.innerHTML = '<div class="empty"><div class="empty-text">No data yet</div></div>';
+    } else {
+      binBars.innerHTML = Object.entries(binCounts)
+        .sort((a,b) => b[1]-a[1])
+        .map(([bin, count]) => {
+          const pct   = Math.round(count / maxCount * 100);
+          const color = data.bin_colors[bin] || '#6B7280';
+          return `
+            <div class="bin-row">
+              <div class="bin-row-header">
+                <span class="bin-name">${bin}</span>
+                <span class="bin-count">${count}</span>
+              </div>
+              <div class="bin-track">
+                <div class="bin-fill" style="width:${pct}%;background:${color}"></div>
+              </div>
+            </div>`;
+        }).join('');
+    }
+
+    // type chart
+    const labelKeys   = Object.keys(data.label_counts);
+    const labelValues = Object.values(data.label_counts);
+    const chartColors = ['#3B82F6','#10B981','#8B5CF6','#F59E0B','#84CC16','#6B7280'];
+
+    if (typeChart) {
+      typeChart.data.labels         = labelKeys;
+      typeChart.data.datasets[0].data = labelValues;
+      typeChart.update();
+    } else {
+      const ctx = document.getElementById('typeChart').getContext('2d');
+      typeChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labelKeys,
+          datasets: [{
+            data            : labelValues,
+            backgroundColor : chartColors.slice(0, labelKeys.length),
+            borderRadius    : 6,
+            borderSkipped   : false,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#E9ECEF' }, ticks: { stepSize: 1 } },
+            x: { grid: { display: false } }
+          },
+          responsive: true,
+          maintainAspectRatio: true,
+        }
+      });
+    }
+  }
+
+  async function loadDetections() {
+    const res  = await fetch('/api/detections');
+    const data = await res.json();
+
+    // feed
+    const feedGrid = document.getElementById('feedGrid');
+    const feedMeta = document.getElementById('feedMeta');
+
+    if (data.length === 0) {
+      feedGrid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+        <div class="empty-icon">📷</div>
+        <div class="empty-text">No captures yet — throw some waste!</div>
+      </div>`;
+    } else {
+      feedMeta.textContent = `Showing latest ${Math.min(data.length, 10)}`;
+      feedGrid.innerHTML = data.slice(0, 10).map(d => {
+        const imgSrc = d.photo1
+          ? `/captures/${d.photo1.replace('captures/', '')}`
+          : '';
+        const imgHtml = imgSrc
+          ? `<img src="${imgSrc}" alt="${d.detected_label}" loading="lazy">`
+          : `<span>${wasteEmoji(d.detected_label)}</span>`;
+        return `
+          <div class="feed-item">
+            <div class="feed-img">${imgHtml}</div>
+            <div class="feed-info">
+              <div class="feed-label">${wasteEmoji(d.detected_label)} ${d.detected_label}</div>
+              <div class="feed-conf">${d.confidence}% confidence</div>
+              <div class="feed-bin">
+                <span class="correct-dot ${d.is_correct ? 'yes' : 'no'}"></span>
+                ${d.bin_label}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // table
+    const tbody = document.getElementById('historyBody');
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:#6C757D">No detections yet</td></tr>`;
+    } else {
+      tbody.innerHTML = data.map(d => `
+        <tr>
+          <td style="font-family:'DM Mono',monospace;font-size:12px;color:#6C757D">${d.timestamp}</td>
+          <td><strong>${wasteEmoji(d.detected_label)} ${d.detected_label}</strong></td>
+          <td><span class="conf-pill ${confClass(d.confidence)}">${d.confidence}%</span></td>
+          <td style="font-size:12px">${d.bin_label}</td>
+          <td>
+            <span class="badge ${d.is_correct ? 'badge-correct' : 'badge-wrong'}">
+              ${d.is_correct ? '✓ Correct' : '✗ Wrong'}
+            </span>
+          </td>
+        </tr>`).join('');
+    }
+  }
+
+  async function refresh() {
+    await Promise.all([loadStats(), loadDetections()]);
+  }
+
+  refresh();
+  setInterval(refresh, 5000);
+</script>
+
+</body>
+</html>

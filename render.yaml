@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: waste-classifier-dashboard
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn dashboard:app
+    envVars:
+      - key: MONGO_URI
+        value: mongodb+srv://wasteclassifier:waste@cluster0.dfks8gq.mongodb.net/?appName=Cluster0
