@@ -60,12 +60,11 @@ BIN_COLORS = {
 }
 
 
-@app.route('/home')
+@app.route('/')
 def home():
     return render_template('home.html')
 
-# ─── FRONTEND ─────────────────────────────────────────
-@app.route('/')
+@app.route('/dashboard')
 def index():
     return render_template('index.html')
 
