@@ -3,806 +3,1277 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Waste Classifier Dashboard</title>
+  <title>WasteVision Dashboard</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fira+Code:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg       : #F8F9FA;
-      --surface  : #FFFFFF;
-      --border   : #E9ECEF;
-      --text     : #212529;
-      --muted    : #6C757D;
-      --accent   : #2563EB;
-      --green    : #16A34A;
-      --red      : #DC2626;
-      --radius   : 12px;
-      --shadow   : 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --bg:      #0D0F17;
+      --surface: #141720;
+      --card:    #1C1F2E;
+      --border:  #252A3A;
+      --text:    #E2E6F0;
+      --muted:   #5A6170;
+      --green:   #00D98B;
+      --red:     #FF4D6A;
+      --blue:    #4B8EFF;
+      --orange:  #FF9C30;
+      --r:       12px;
     }
 
     body {
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Manrope', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
     }
 
-    /* ── HEADER ── */
+    /* HEADER */
     header {
-      background: var(--surface);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,15,23,0.95);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      padding: 0 32px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      height: 58px;
+      display: flex; align-items: center;
+      padding: 0 24px; gap: 16px;
     }
 
     .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      font-size: 16px;
-      letter-spacing: -0.3px;
+      font-family: 'Syne', sans-serif;
+      font-size: 17px; font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex; align-items: center; gap: 8px;
     }
 
     .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
+      width: 28px; height: 28px;
+      background: var(--green);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #000;
     }
 
-    .live-badge {
+    .logo .accent { color: var(--green); }
+
+    /* ROLE TABS */
+    .role-tabs {
       display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--green);
-      font-weight: 500;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 3px; gap: 2px;
+    }
+
+    .role-tab {
+      padding: 5px 14px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Manrope', sans-serif;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .role-tab:hover { color: var(--text); }
+
+    .role-tab.active {
+      background: var(--green);
+      color: #000;
+    }
+
+    /* LIVE */
+    .live {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 11px; color: var(--green);
     }
 
     .live-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px; height: 7px;
       background: var(--green);
       border-radius: 50%;
-      animation: pulse 2s infinite;
+      animation: glow 1.5s infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    @keyframes glow {
+      0%,100% { opacity:1; box-shadow: 0 0 5px var(--green); }
+      50%      { opacity:0.4; box-shadow: none; }
     }
 
-    /* ── MAIN ── */
+    /* LAYOUT */
     main {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 32px;
+      padding: 24px 24px 80px;
     }
 
-    /* ── STAT CARDS ── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 28px;
-    }
+    .page { display: none; }
+    .page.active { display: block; }
 
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: var(--shadow);
-    }
-
-    .stat-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--muted);
+    /* SECTION TITLES */
+    .sect {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px; font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .stat-value {
-      font-size: 36px;
-      font-weight: 600;
-      letter-spacing: -1px;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-
-    .stat-sub {
-      font-size: 12px;
+      letter-spacing: 1.5px;
       color: var(--muted);
+      margin-bottom: 12px;
     }
 
-    .stat-value.green { color: var(--green); }
-    .stat-value.blue  { color: var(--accent); }
+    /* GRID HELPERS */
+    .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+    .g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+    .g2 { display: grid; grid-template-columns: 1fr 1fr;       gap: 12px; margin-bottom: 20px; }
+    .g21{ display: grid; grid-template-columns: 2fr 1fr;       gap: 12px; margin-bottom: 20px; }
 
-    /* ── CHARTS ROW ── */
-    .charts-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-
-    .card {
-      background: var(--surface);
+    /* KPI CARD */
+    .kpi {
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: var(--shadow);
+      border-radius: var(--r);
+      padding: 20px;
+    }
+
+    .kpi-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--muted); margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 34px; font-weight: 800;
+      letter-spacing: -1.5px; line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .kpi-sub {
+      font-family: 'Fira Code', monospace;
+      font-size: 11px; color: var(--muted);
+    }
+
+    .kpi-value.green  { color: var(--green); }
+    .kpi-value.blue   { color: var(--blue); }
+    .kpi-value.red    { color: var(--red); }
+    .kpi-value.orange { color: var(--orange); }
+
+    /* CARD */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
     }
 
     .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 20px;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--muted); margin-bottom: 16px;
     }
 
-    /* ── BIN BARS ── */
-    .bin-bars { display: flex; flex-direction: column; gap: 12px; }
-
-    .bin-row { display: flex; flex-direction: column; gap: 4px; }
-
-    .bin-row-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
+    /* BIN CARD */
+    .bin-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
     }
 
-    .bin-name { font-weight: 500; }
-    .bin-count { color: var(--muted); font-family: 'DM Mono', monospace; }
+    .bin-card:hover {
+      border-color: var(--green);
+      transform: translateY(-2px);
+    }
 
-    .bin-track {
+    .bin-card-header {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 12px;
+    }
+
+    .bin-card-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700;
+    }
+
+    .bin-card-type {
+      font-size: 11px; color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      font-size: 10px; font-weight: 700;
+      padding: 3px 9px; border-radius: 99px;
+    }
+
+    .status-pill.online  { background: rgba(0,217,139,0.12); color: var(--green); }
+    .status-pill.offline { background: rgba(255,77,106,0.12); color: var(--red); }
+    .status-pill.idle    { background: rgba(255,156,48,0.12); color: var(--orange); }
+
+    .bin-acc {
+      font-family: 'Syne', sans-serif;
+      font-size: 40px; font-weight: 800;
+      letter-spacing: -2px; line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .bin-acc.good { color: var(--green); }
+    .bin-acc.bad  { color: var(--red); }
+
+    .bin-counts {
+      font-family: 'Fira Code', monospace;
+      font-size: 11px; color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .wrong-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+
+    .wrong-chip {
+      background: rgba(255,77,106,0.1);
+      color: var(--red);
+      border: 1px solid rgba(255,77,106,0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .no-wrong {
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    /* DIVIDER */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0 12px;
+    }
+
+    /* BARS */
+    .bar-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .bar-row-label {
+      display: flex; justify-content: space-between;
+      font-size: 12px; margin-bottom: 5px;
+    }
+
+    .bar-name { font-weight: 600; }
+    .bar-val  { font-family: 'Fira Code', monospace; color: var(--muted); font-size: 11px; }
+
+    .bar-track {
       height: 6px;
       background: var(--border);
-      border-radius: 99px;
-      overflow: hidden;
+      border-radius: 99px; overflow: hidden;
     }
 
-    .bin-fill {
-      height: 100%;
-      border-radius: 99px;
-      transition: width 0.6s ease;
+    .bar-fill {
+      height: 100%; border-radius: 99px;
+      transition: width 0.7s cubic-bezier(.4,0,.2,1);
     }
 
-    /* ── LATEST FEED ── */
+    /* FEED */
     .feed-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin-bottom: 28px;
+      gap: 10px; margin-bottom: 20px;
     }
 
     .feed-item {
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      transition: transform 0.2s, box-shadow 0.2s;
+      border-radius: 10px; overflow: hidden;
+      transition: transform 0.18s, border-color 0.18s;
     }
 
-    .feed-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
+    .feed-item:hover { transform: translateY(-2px); border-color: var(--green); }
 
     .feed-img {
-      width: 100%;
-      aspect-ratio: 1;
-      object-fit: cover;
-      background: var(--bg);
-      display: flex;
-      align-items: center;
+      width: 100%; aspect-ratio: 1;
+      background: var(--surface);
+      display: flex; align-items: center;
       justify-content: center;
-      font-size: 32px;
+      font-size: 30px; overflow: hidden;
     }
 
-    .feed-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .feed-img img { width:100%; height:100%; object-fit:cover; }
 
-    .feed-info {
-      padding: 10px 12px;
-    }
+    .feed-info { padding: 9px; }
+    .feed-label { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .feed-conf  { font-family: 'Fira Code', monospace; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+    .feed-badge { font-size: 10px; font-weight: 700; }
+    .feed-badge.ok  { color: var(--green); }
+    .feed-badge.err { color: var(--red); }
 
-    .feed-label {
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
+    /* TABLE */
+    .tbl-wrap { overflow-x: auto; }
 
-    .feed-conf {
-      font-size: 11px;
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
       color: var(--muted);
-      font-family: 'DM Mono', monospace;
-    }
-
-    .feed-bin {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .correct-dot {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      margin-right: 3px;
-    }
-
-    .correct-dot.yes { background: var(--green); }
-    .correct-dot.no  { background: var(--red); }
-
-    /* ── TABLE ── */
-    .table-wrap { overflow-x: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    th {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
       text-align: left;
-      padding: 10px 16px;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid var(--border);
     }
 
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
+    tbody td {
+      padding: 11px 14px;
+      font-size: 12px;
+      border-bottom: 1px solid rgba(37,42,58,0.5);
       vertical-align: middle;
     }
 
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--bg); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
 
     .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 99px;
-      font-size: 11px;
-      font-weight: 500;
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 3px 9px; border-radius: 99px;
+      font-size: 10px; font-weight: 700;
     }
 
-    .badge-correct { background: #DCFCE7; color: #166534; }
-    .badge-wrong   { background: #FEE2E2; color: #991B1B; }
+    .badge.ok  { background: rgba(0,217,139,0.1); color: var(--green); }
+    .badge.err { background: rgba(255,77,106,0.1); color: var(--red); }
 
     .conf-pill {
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      font-weight: 500;
+      display: inline-block;
+      padding: 2px 7px; border-radius: 99px;
+      font-family: 'Fira Code', monospace; font-size: 10px;
     }
 
-    .conf-high { color: var(--green); }
-    .conf-mid  { color: #D97706; }
-    .conf-low  { color: var(--red); }
+    .conf-h { background: rgba(0,217,139,0.1);  color: var(--green); }
+    .conf-m { background: rgba(255,156,48,0.1);  color: var(--orange); }
+    .conf-l { background: rgba(255,77,106,0.1);  color: var(--red); }
 
-    /* ── EMPTY STATE ── */
-    .empty {
+    /* FILTER BAR */
+    .filter-bar {
+      display: flex; gap: 8px; align-items: center;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+
+    .filter-bar select, .filter-bar input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-family: 'Manrope', sans-serif;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-bar select:focus, .filter-bar input:focus {
+      border-color: var(--green);
+    }
+
+    .filter-label {
+      font-size: 11px; color: var(--muted); font-weight: 600;
+    }
+
+    /* MODAL (drill-down) */
+    .modal-overlay {
+      display: none; position: fixed;
+      inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 500; align-items: center; justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: min(700px, 94vw);
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 28px;
+    }
+
+    .modal-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 800;
+    }
+
+    .modal-close {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .modal-close:hover { border-color: var(--red); color: var(--red); }
+
+    .modal-stats {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 12px; margin-bottom: 20px;
+    }
+
+    .modal-stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px;
       text-align: center;
-      padding: 60px;
-      color: var(--muted);
     }
 
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
-    .empty-text { font-size: 14px; }
-
-    /* ── SECTION HEADER ── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
+    .modal-stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px; font-weight: 800; line-height: 1;
     }
 
-    .section-title {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
+    .modal-stat-label {
+      font-size: 10px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;
     }
 
-    .section-meta {
-      font-size: 12px;
-      color: var(--muted);
+    /* COLLECTOR ALERTS */
+    .alert-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .alert-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 15px; border-radius: 10px;
+      font-size: 13px; font-weight: 500;
     }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .charts-row { grid-template-columns: 1fr; }
-      .feed-grid  { grid-template-columns: repeat(3, 1fr); }
+    .alert-row.danger  { background: rgba(255,77,106,0.07); border: 1px solid rgba(255,77,106,0.18); color: var(--red); }
+    .alert-row.success { background: rgba(0,217,139,0.07);  border: 1px solid rgba(0,217,139,0.18);  color: var(--green); }
+    .alert-row.warn    { background: rgba(255,156,48,0.07); border: 1px solid rgba(255,156,48,0.18); color: var(--orange); }
+    .alert-row.info    { background: rgba(75,142,255,0.07); border: 1px solid rgba(75,142,255,0.18); color: var(--blue); }
+    .alert-icon { font-size: 18px; }
+
+    /* ADMIN DEVICE TABLE */
+    .device-status {
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .device-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+
+    .device-dot.online  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .device-dot.offline { background: var(--red); }
+    .device-dot.idle    { background: var(--orange); }
+
+    /* EMPTY */
+    .empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px; gap: 8px; color: var(--muted);
+    }
+
+    .empty-icon { font-size: 32px; opacity: 0.4; }
+    .empty-text { font-size: 13px; }
+
+    /* CHATBOT */
+    #chat-btn {
+      position: fixed; bottom: 22px; right: 22px;
+      width: 50px; height: 50px; border-radius: 50%;
+      background: var(--green);
+      border: none; cursor: pointer;
+      font-size: 22px; color: #000;
+      box-shadow: 0 4px 20px rgba(0,217,139,0.35);
+      z-index: 900;
+      transition: transform 0.18s;
+    }
+
+    #chat-btn:hover { transform: scale(1.08); }
+
+    #chat-box {
+      display: none; position: fixed;
+      bottom: 84px; right: 22px;
+      width: 350px; max-height: 500px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.5);
+      flex-direction: column;
+      z-index: 899; overflow: hidden;
+    }
+
+    #chat-box.open { display: flex; }
+
+    #chat-head {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .chat-av {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--green);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #000;
+    }
+
+    .chat-name { font-weight: 700; font-size: 13px; }
+
+    .chat-role-badge {
+      margin-left: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 9px; color: var(--green);
+      background: rgba(0,217,139,0.1);
+      padding: 2px 7px; border-radius: 5px;
+    }
+
+    #chat-msgs {
+      flex: 1; overflow-y: auto;
+      padding: 12px; display: flex;
+      flex-direction: column; gap: 8px;
+    }
+
+    #chat-msgs::-webkit-scrollbar { width: 3px; }
+    #chat-msgs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .cmsg {
+      max-width: 88%; padding: 9px 12px;
+      border-radius: 11px;
+      font-size: 12px; line-height: 1.55;
+    }
+
+    .cmsg.bot  { background: var(--card); border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 3px; }
+    .cmsg.user { background: var(--green); color: #000; font-weight: 600; align-self: flex-end; border-bottom-right-radius: 3px; }
+    .cmsg.typing { color: var(--muted); font-style: italic; }
+
+    .chat-sugg {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      padding: 0 12px 8px;
+    }
+
+    .sugg {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 7px; padding: 3px 9px;
+      font-size: 11px; cursor: pointer;
+      color: var(--muted); transition: all 0.15s;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .sugg:hover { border-color: var(--green); color: var(--green); }
+
+    #chat-form {
+      display: flex; gap: 7px; padding: 10px;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    #chat-input {
+      flex: 1; background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 11px;
+      font-size: 12px; font-family: 'Manrope', sans-serif;
+      color: var(--text); outline: none;
+    }
+
+    #chat-input:focus { border-color: var(--green); }
+    #chat-input::placeholder { color: var(--muted); }
+
+    #chat-send {
+      background: var(--green); color: #000;
+      border: none; border-radius: 8px;
+      padding: 7px 14px; cursor: pointer;
+      font-size: 12px; font-weight: 700;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    @media (max-width:900px) {
+      .g4 { grid-template-columns: 1fr 1fr; }
+      .g3 { grid-template-columns: 1fr 1fr; }
+      .g2, .g21 { grid-template-columns: 1fr; }
+      .feed-grid { grid-template-columns: repeat(3,1fr); }
+      header { padding: 0 14px; }
+      main { padding: 14px; }
     }
   </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
   <div class="logo">
     <div class="logo-icon">♻️</div>
-    Waste Classifier
+    Waste<span class="accent">Vision</span>
   </div>
-  <div class="live-badge">
+
+  <div class="role-tabs">
+    <button class="role-tab active" id="tab-supervisor" onclick="switchRole('supervisor')">👷 Supervisor</button>
+    <button class="role-tab" id="tab-collector"  onclick="switchRole('collector')">🚛 Collector</button>
+    <button class="role-tab" id="tab-admin"       onclick="switchRole('admin')">📊 Admin</button>
+  </div>
+
+  <div class="live">
     <div class="live-dot"></div>
-    Live — updates every 5s
+    LIVE · 5s
   </div>
 </header>
 
 <main>
 
-  <!-- STAT CARDS -->
-  <div class="stats-grid" id="statsGrid">
-    <div class="stat-card">
-      <div class="stat-label">Total Detections</div>
-      <div class="stat-value blue" id="statTotal">—</div>
-      <div class="stat-sub">All time</div>
+<!-- ════════════════════════════════════════
+     SUPERVISOR PAGE
+════════════════════════════════════════ -->
+<div class="page active" id="page-supervisor">
+
+  <div class="sect" style="margin-bottom:12px">System Overview</div>
+  <div class="g4">
+    <div class="kpi">
+      <div class="kpi-label">Total Detections</div>
+      <div class="kpi-value blue" id="sv-total">—</div>
+      <div class="kpi-sub">All time</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Correct Classifications</div>
-      <div class="stat-value green" id="statCorrect">—</div>
-      <div class="stat-sub" id="statAccSub">—</div>
+    <div class="kpi">
+      <div class="kpi-label">Correct Disposals</div>
+      <div class="kpi-value green" id="sv-correct">—</div>
+      <div class="kpi-sub" id="sv-acc-sub">—</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Accuracy</div>
-      <div class="stat-value" id="statAccuracy">—</div>
-      <div class="stat-sub">Classification accuracy</div>
+    <div class="kpi">
+      <div class="kpi-label">Wrong Disposals</div>
+      <div class="kpi-value red" id="sv-wrong">—</div>
+      <div class="kpi-sub" id="sv-wrong-sub">—</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Most Common</div>
-      <div class="stat-value" id="statCommon" style="font-size:24px;">—</div>
-      <div class="stat-sub" id="statCommonSub">—</div>
+    <div class="kpi">
+      <div class="kpi-label">System Accuracy</div>
+      <div class="kpi-value" id="sv-acc" style="color:var(--text)">—</div>
+      <div class="kpi-sub">Classification accuracy</div>
     </div>
   </div>
 
-  <!-- CHARTS ROW -->
-  <div class="charts-row">
+  <div class="sect">Bin Performance — Click to View Details</div>
+  <div class="g3" id="sv-bin-cards"></div>
+
+  <div class="g2">
     <div class="card">
       <div class="card-title">Detections by Waste Type</div>
-      <canvas id="typeChart" height="200"></canvas>
+      <canvas id="sv-type-chart" height="220"></canvas>
     </div>
     <div class="card">
       <div class="card-title">Bin Distribution</div>
-      <div class="bin-bars" id="binBars">
-        <div class="empty"><div class="empty-text">Loading...</div></div>
-      </div>
+      <div class="bar-list" id="sv-bin-bars"></div>
     </div>
   </div>
 
-  <!-- LATEST FEED -->
-  <div class="section-header">
-    <div class="section-title">Latest Captures</div>
-    <div class="section-meta" id="feedMeta"></div>
-  </div>
-  <div class="feed-grid" id="feedGrid">
-    <div class="empty" style="grid-column: 1/-1">
-      <div class="empty-icon">📷</div>
-      <div class="empty-text">No captures yet — throw some waste!</div>
-    </div>
+  <div class="sect">Latest Captures</div>
+  <div class="feed-grid" id="sv-feed"></div>
+
+  <div class="sect" style="margin-top:20px">Detection History</div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <select id="sv-filter-type" onchange="applyFilters()">
+      <option value="">All Types</option>
+      <option>Plastic</option><option>Paper</option>
+      <option>Glass</option><option>Metal</option>
+    </select>
+    <select id="sv-filter-result" onchange="applyFilters()">
+      <option value="">All Results</option>
+      <option value="true">Correct Only</option>
+      <option value="false">Wrong Only</option>
+    </select>
+    <select id="sv-filter-bin" onchange="applyFilters()">
+      <option value="">All Bins</option>
+    </select>
   </div>
 
-  <!-- HISTORY TABLE -->
-  <div class="section-header" style="margin-top: 8px;">
-    <div class="section-title">Detection History</div>
-    <div class="section-meta">Last 20 detections</div>
-  </div>
   <div class="card">
-    <div class="table-wrap">
+    <div class="tbl-wrap">
       <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Object</th>
-            <th>Confidence</th>
-            <th>Bin</th>
-            <th>Result</th>
-          </tr>
-        </thead>
-        <tbody id="historyBody">
-          <tr><td colspan="5" class="empty"><div class="empty-text">No data yet</div></td></tr>
-        </tbody>
+        <thead><tr>
+          <th>Time</th><th>Object</th><th>Confidence</th>
+          <th>Bin</th><th>Device</th><th>Result</th>
+        </tr></thead>
+        <tbody id="sv-table"></tbody>
       </table>
     </div>
   </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     COLLECTOR PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-collector">
+
+  <div class="sect">Bin Status</div>
+  <div class="g3" id="col-bin-cards"></div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Action Alerts</div>
+      <div class="alert-list" id="col-alerts"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recent Detections</div>
+      <div class="alert-list" id="col-events"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Today's Summary</div>
+    <div class="g3" id="col-today" style="margin-bottom:0"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ADMIN PAGE
+════════════════════════════════════════ -->
+<div class="page" id="page-admin">
+
+  <div class="sect">Device Health</div>
+  <div class="card" style="margin-bottom:20px">
+    <div id="adm-devices"></div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Detections by Waste Type</div>
+      <canvas id="adm-type-chart" height="220"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">National: Wrong Disposal by Material</div>
+      <canvas id="adm-material-chart" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">National: Recycling Rate by Material</div>
+      <canvas id="adm-recycling-chart" height="220"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">National: Urban vs Rural Segregation</div>
+      <canvas id="adm-urban-chart" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="sect" style="margin-top:8px">Full Detection Log — Admin View</div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Time</th><th>Label</th><th>Confidence</th>
+          <th>Bin ID</th><th>Bin Type</th><th>Device</th><th>Location</th><th>Result</th>
+        </tr></thead>
+        <tbody id="adm-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 </main>
 
-<script>
-  let typeChart = null;
+<!-- BIN DRILL-DOWN MODAL -->
+<div class="modal-overlay" id="bin-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">BIN_01 Details</div>
+      <button class="modal-close" onclick="closeModal()">✕ Close</button>
+    </div>
 
-  function confClass(c) {
-    if (c >= 80) return 'conf-high';
-    if (c >= 50) return 'conf-mid';
-    return 'conf-low';
-  }
+    <div class="modal-stats" id="modal-stats"></div>
 
-  function wasteEmoji(label) {
-    const map = {
-      'Plastic': '🧴', 'Paper': '📄', 'Glass': '🍾',
-      'Metal': '🥫', 'Organic': '🌿', 'Organics': '🌿'
-    };
-    return map[label] || '🗑️';
-  }
+    <div class="card-title" style="margin-bottom:12px">WRONG ITEMS DISPOSED IN THIS BIN</div>
+    <div class="wrong-chips" id="modal-wrong-types" style="margin-bottom:20px"></div>
 
-  async function loadStats() {
-    const res  = await fetch('/api/stats');
-    const data = await res.json();
+    <div class="card-title" style="margin-bottom:12px">RECENT EVENTS</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Time</th><th>Object</th><th>Confidence</th><th>Result</th>
+        </tr></thead>
+        <tbody id="modal-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-    document.getElementById('statTotal').textContent   = data.total;
-    document.getElementById('statCorrect').textContent = data.correct;
-    document.getElementById('statAccuracy').textContent = data.accuracy + '%';
-    document.getElementById('statAccSub').textContent  = data.accuracy + '% accuracy';
-
-    // most common label
-    const labels = data.label_counts;
-    if (Object.keys(labels).length > 0) {
-      const top = Object.entries(labels).sort((a,b) => b[1]-a[1])[0];
-      document.getElementById('statCommon').textContent    = wasteEmoji(top[0]) + ' ' + top[0];
-      document.getElementById('statCommonSub').textContent = top[1] + ' detections';
-    }
-
-    // bin bars
-    const binBars  = document.getElementById('binBars');
-    const binCounts = data.bin_counts;
-    const maxCount  = Math.max(...Object.values(binCounts), 1);
-
-    if (Object.keys(binCounts).length === 0) {
-      binBars.innerHTML = '<div class="empty"><div class="empty-text">No data yet</div></div>';
-    } else {
-      binBars.innerHTML = Object.entries(binCounts)
-        .sort((a,b) => b[1]-a[1])
-        .map(([bin, count]) => {
-          const pct   = Math.round(count / maxCount * 100);
-          const color = data.bin_colors[bin] || '#6B7280';
-          return `
-            <div class="bin-row">
-              <div class="bin-row-header">
-                <span class="bin-name">${bin}</span>
-                <span class="bin-count">${count}</span>
-              </div>
-              <div class="bin-track">
-                <div class="bin-fill" style="width:${pct}%;background:${color}"></div>
-              </div>
-            </div>`;
-        }).join('');
-    }
-
-    // type chart
-    const labelKeys   = Object.keys(data.label_counts);
-    const labelValues = Object.values(data.label_counts);
-    const chartColors = ['#3B82F6','#10B981','#8B5CF6','#F59E0B','#84CC16','#6B7280'];
-
-    if (typeChart) {
-      typeChart.data.labels         = labelKeys;
-      typeChart.data.datasets[0].data = labelValues;
-      typeChart.update();
-    } else {
-      const ctx = document.getElementById('typeChart').getContext('2d');
-      typeChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labelKeys,
-          datasets: [{
-            data            : labelValues,
-            backgroundColor : chartColors.slice(0, labelKeys.length),
-            borderRadius    : 6,
-            borderSkipped   : false,
-          }]
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { beginAtZero: true, grid: { color: '#E9ECEF' }, ticks: { stepSize: 1 } },
-            x: { grid: { display: false } }
-          },
-          responsive: true,
-          maintainAspectRatio: true,
-        }
-      });
-    }
-  }
-
-  async function loadDetections() {
-    const res  = await fetch('/api/detections');
-    const data = await res.json();
-
-    // feed
-    const feedGrid = document.getElementById('feedGrid');
-    const feedMeta = document.getElementById('feedMeta');
-
-    if (data.length === 0) {
-      feedGrid.innerHTML = `<div class="empty" style="grid-column:1/-1">
-        <div class="empty-icon">📷</div>
-        <div class="empty-text">No captures yet — throw some waste!</div>
-      </div>`;
-    } else {
-      feedMeta.textContent = `Showing latest ${Math.min(data.length, 10)}`;
-      feedGrid.innerHTML = data.slice(0, 10).map(d => {
-        const imgSrc = d.photo1
-          ? (d.photo1.startsWith('http') ? d.photo1 : `/captures/${d.photo1.replace('captures/', '')}`)
-          : '';
-        const imgHtml = imgSrc
-          ? `<img src="${imgSrc}" alt="${d.detected_label}" loading="lazy">`
-          : `<span>${wasteEmoji(d.detected_label)}</span>`;
-        return `
-          <div class="feed-item">
-            <div class="feed-img">${imgHtml}</div>
-            <div class="feed-info">
-              <div class="feed-label">${wasteEmoji(d.detected_label)} ${d.detected_label}</div>
-              <div class="feed-conf">${d.confidence}% confidence</div>
-              <div class="feed-bin">
-                <span class="correct-dot ${d.is_correct ? 'yes' : 'no'}"></span>
-                ${d.bin_label}
-              </div>
-            </div>
-          </div>`;
-      }).join('');
-    }
-
-    // table
-    const tbody = document.getElementById('historyBody');
-    if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:#6C757D">No detections yet</td></tr>`;
-    } else {
-      tbody.innerHTML = data.map(d => `
-        <tr>
-          <td style="font-family:'DM Mono',monospace;font-size:12px;color:#6C757D">${d.timestamp}</td>
-          <td><strong>${wasteEmoji(d.detected_label)} ${d.detected_label}</strong></td>
-          <td><span class="conf-pill ${confClass(d.confidence)}">${d.confidence}%</span></td>
-          <td style="font-size:12px">${d.bin_label}</td>
-          <td>
-            <span class="badge ${d.is_correct ? 'badge-correct' : 'badge-wrong'}">
-              ${d.is_correct ? '✓ Correct' : '✗ Wrong'}
-            </span>
-          </td>
-        </tr>`).join('');
-    }
-  }
-
-  async function refresh() {
-    await Promise.all([loadStats(), loadDetections()]);
-  }
-
-  refresh();
-  setInterval(refresh, 5000);
-</script>
-
-<!-- ── CHATBOT ──────────────────────────────────── -->
-<style>
-  #chat-btn {
-    position: fixed;
-    bottom: 28px;
-    right: 28px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--accent);
-    border: none;
-    cursor: pointer;
-    font-size: 24px;
-    box-shadow: 0 4px 16px rgba(37,99,235,0.4);
-    z-index: 999;
-    transition: transform 0.2s;
-  }
-  #chat-btn:hover { transform: scale(1.1); }
-
-  #chat-box {
-    display: none;
-    position: fixed;
-    bottom: 96px;
-    right: 28px;
-    width: 340px;
-    max-height: 500px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    flex-direction: column;
-    z-index: 998;
-    overflow: hidden;
-  }
-  #chat-box.open { display: flex; }
-
-  #chat-header {
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  #chat-header span { font-size: 18px; }
-
-  #chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 340px;
-  }
-
-  .msg {
-    max-width: 85%;
-    padding: 10px 13px;
-    border-radius: 12px;
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  .msg.bot {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    align-self: flex-start;
-    border-bottom-left-radius: 4px;
-  }
-  .msg.user {
-    background: var(--accent);
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 4px;
-  }
-  .msg.typing { color: var(--muted); font-style: italic; }
-
-  #chat-input-row {
-    display: flex;
-    gap: 8px;
-    padding: 12px;
-    border-top: 1px solid var(--border);
-  }
-  #chat-input {
-    flex: 1;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 13px;
-    font-family: inherit;
-    background: var(--bg);
-    color: var(--text);
-    outline: none;
-  }
-  #chat-input:focus { border-color: var(--accent); }
-  #chat-send {
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 14px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-  }
-  #chat-send:hover { opacity: 0.9; }
-
-  .chat-suggestions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 0 14px 10px;
-  }
-  .suggestion {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 99px;
-    padding: 4px 10px;
-    font-size: 11px;
-    cursor: pointer;
-    color: var(--muted);
-    transition: all 0.15s;
-  }
-  .suggestion:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-</style>
-
-<button id="chat-btn" onclick="toggleChat()" title="Ask WasteBot">🤖</button>
+<!-- CHATBOT -->
+<button id="chat-btn" onclick="toggleChat()">🤖</button>
 
 <div id="chat-box">
-  <div id="chat-header">
-    <span>🤖</span> WasteBot
+  <div id="chat-head">
+    <div class="chat-av">🤖</div>
+    <div>
+      <div class="chat-name">WasteBot</div>
+    </div>
+    <div class="chat-role-badge" id="chat-role-badge">SUPERVISOR</div>
   </div>
-  <div id="chat-messages">
-    <div class="msg bot">Hi! I'm WasteBot. Ask me about waste segregation, disposal accuracy, or recycling trends!</div>
+  <div id="chat-msgs">
+    <div class="cmsg bot">Hi! I'm WasteBot. Ask me anything about bins, waste types, or system performance!</div>
   </div>
-  <div class="chat-suggestions">
-    <span class="suggestion" onclick="sendSuggestion(this)">System accuracy?</span>
-    <span class="suggestion" onclick="sendSuggestion(this)">Wrong disposals today?</span>
-    <span class="suggestion" onclick="sendSuggestion(this)">Most wrongly disposed waste?</span>
-    <span class="suggestion" onclick="sendSuggestion(this)">Urban vs rural segregation?</span>
+  <div class="chat-sugg" id="chat-sugg">
+    <span class="sugg" onclick="quickAsk(this)">System accuracy?</span>
+    <span class="sugg" onclick="quickAsk(this)">Wrong disposals?</span>
+    <span class="sugg" onclick="quickAsk(this)">National avg?</span>
+    <span class="sugg" onclick="quickAsk(this)">CO2 saved?</span>
   </div>
-  <div id="chat-input-row">
-    <input id="chat-input" type="text" placeholder="Ask about waste data..."
-           onkeydown="if(event.key==='Enter') sendMessage()">
-    <button id="chat-send" onclick="sendMessage()">Send</button>
+  <div id="chat-form">
+    <input id="chat-input" placeholder="Ask about waste data..."
+           onkeydown="if(event.key==='Enter')sendMsg()">
+    <button id="chat-send" onclick="sendMsg()">Send</button>
   </div>
 </div>
 
 <script>
-  const chatMessages = [];
+// ── GLOBALS ────────────────────────────────────────
+let svTypeChart = null, admTypeChart = null, admMatChart = null;
+let admRecycChart = null, admUrbanChart = null;
+let currentRole = 'supervisor';
+let allDetections = [];
+const chatHistory = [];
 
-  function toggleChat() {
-    const box = document.getElementById('chat-box');
-    box.classList.toggle('open');
-  }
+// ── EMOJI MAP ──────────────────────────────────────
+const emap = { Plastic:'🧴', Paper:'📄', Glass:'🍾', Metal:'🥫', Organic:'🌿', Organics:'🌿', Unknown:'🗑️' };
+const wEmoji = l => emap[l] || '🗑️';
+const confCls = c => c >= 80 ? 'conf-h' : c >= 50 ? 'conf-m' : 'conf-l';
 
-  function sendSuggestion(el) {
-    document.getElementById('chat-input').value = el.textContent;
-    sendMessage();
-  }
-
-  async function sendMessage() {
-    const input = document.getElementById('chat-input');
-    const msg   = input.value.trim();
-    if (!msg) return;
-
-    input.value = '';
-    appendMessage('user', msg);
-    chatMessages.push({ role: 'user', content: msg });
-
-    const typingEl = appendMessage('bot', 'Thinking...', true);
-
-    try {
-      const res  = await fetch('/api/chat', {
-        method  : 'POST',
-        headers : { 'Content-Type': 'application/json' },
-        body    : JSON.stringify({ messages: chatMessages })
-      });
-      const data = await res.json();
-      const reply = data.reply || 'Sorry, I could not get a response.';
-
-      typingEl.remove();
-      appendMessage('bot', reply);
-      chatMessages.push({ role: 'assistant', content: reply });
-
-    } catch (err) {
-      typingEl.remove();
-      appendMessage('bot', 'Connection error. Please try again.');
+// ── CHART DEFAULTS ─────────────────────────────────
+function chartOpts(legend=false) {
+  return {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { display: legend, position: 'bottom', labels: { color: '#5A6170', font: { family: 'Fira Code', size: 10 }, boxWidth: 10 } } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A6170', font: { family: 'Fira Code', size: 10 } } },
+      x: { grid: { display: false }, ticks: { color: '#5A6170', font: { family: 'Fira Code', size: 10 } } }
     }
+  };
+}
+
+const COLORS = ['#4B8EFF','#00D98B','#8B5CF6','#FF9C30','#84CC16','#5A6170'];
+const COLORS_RED = '#FF4D6A';
+const COLORS_GREEN = '#00D98B';
+
+// ── ROLE SWITCH ────────────────────────────────────
+const roleSuggs = {
+  supervisor: ['System accuracy?','Wrong disposals?','National avg?','CO2 saved?'],
+  collector:  ['Which bin needs attention?','Last wrong disposal?','What to collect next?'],
+  admin:      ['Device health?','Worst material?','System vs national?','Full analytics?'],
+};
+
+const roleBadges = { supervisor: 'SUPERVISOR', collector: 'COLLECTOR', admin: 'ADMIN' };
+
+function switchRole(role) {
+  currentRole = role;
+
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + role).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + role).classList.add('active');
+
+  document.getElementById('chat-role-badge').textContent = roleBadges[role];
+  document.getElementById('chat-sugg').innerHTML = (roleSuggs[role]||roleSuggs.supervisor)
+    .map(s => `<span class="sugg" onclick="quickAsk(this)">${s}</span>`).join('');
+
+  loadRoleData();
+}
+
+// ── LOAD ALL DATA ──────────────────────────────────
+async function loadAll() {
+  const [stats, dets] = await Promise.all([
+    fetch('/api/stats').then(r => r.json()),
+    fetch('/api/detections').then(r => r.json()),
+  ]);
+
+  allDetections = dets;
+
+  // KPIs
+  const wrong = stats.total - stats.correct;
+  document.getElementById('sv-total').textContent   = stats.total.toLocaleString();
+  document.getElementById('sv-correct').textContent = stats.correct.toLocaleString();
+  document.getElementById('sv-wrong').textContent   = wrong.toLocaleString();
+  document.getElementById('sv-acc').textContent     = stats.accuracy + '%';
+  document.getElementById('sv-acc').style.color     = stats.accuracy >= 80 ? 'var(--green)' : stats.accuracy >= 60 ? 'var(--orange)' : 'var(--red)';
+  document.getElementById('sv-acc-sub').textContent   = `${stats.accuracy}% accuracy`;
+  document.getElementById('sv-wrong-sub').textContent = `${((wrong/stats.total||0)*100).toFixed(1)}% of total`;
+
+  // Type chart (supervisor)
+  const lk = Object.keys(stats.label_counts);
+  const lv = Object.values(stats.label_counts);
+  if (svTypeChart) { svTypeChart.data.labels = lk; svTypeChart.data.datasets[0].data = lv; svTypeChart.update(); }
+  else svTypeChart = new Chart(document.getElementById('sv-type-chart'), {
+    type: 'bar',
+    data: { labels: lk, datasets: [{ data: lv, backgroundColor: COLORS.slice(0,lk.length), borderRadius: 8, borderSkipped: false }] },
+    options: chartOpts()
+  });
+
+  // Bin bars
+  const bins   = stats.bin_counts;
+  const maxC   = Math.max(...Object.values(bins), 1);
+  const bcols  = { 'RECYCLE BIN (Plastic)':'#4B8EFF', 'RECYCLE BIN (Glass)':'#8B5CF6', 'RECYCLE BIN (Paper)':'#00D98B', 'RECYCLE BIN (Metal)':'#FF9C30', 'ORGANIC BIN':'#84CC16', 'GENERAL BIN (Non-recyclable)':'#5A6170' };
+  document.getElementById('sv-bin-bars').innerHTML = Object.entries(bins).sort((a,b)=>b[1]-a[1]).map(([name,count]) => `
+    <div>
+      <div class="bar-row-label">
+        <span class="bar-name">${name}</span>
+        <span class="bar-val">${count}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.round(count/maxC*100)}%;background:${bcols[name]||'#5A6170'}"></div>
+      </div>
+    </div>`).join('');
+
+  // Feed
+  if (dets.length === 0) {
+    document.getElementById('sv-feed').innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📷</div><div class="empty-text">No captures yet</div></div>';
+  } else {
+    document.getElementById('sv-feed').innerHTML = dets.slice(0,10).map(d => {
+      const src = d.photo1 ? (d.photo1.startsWith('http') ? d.photo1 : `/captures/${d.photo1.replace('captures/','')}`) : '';
+      const img = src ? `<img src="${src}" alt="${d.detected_label}" loading="lazy">` : `<span>${wEmoji(d.detected_label)}</span>`;
+      return `<div class="feed-item">
+        <div class="feed-img">${img}</div>
+        <div class="feed-info">
+          <div class="feed-label">${wEmoji(d.detected_label)} ${d.detected_label}</div>
+          <div class="feed-conf">${d.confidence}% conf.</div>
+          <div class="feed-badge ${d.is_correct?'ok':'err'}">${d.is_correct?'✓ Correct':'✗ Wrong bin'}</div>
+        </div>
+      </div>`;
+    }).join('');
   }
 
-  function appendMessage(role, text, isTyping = false) {
-    const container = document.getElementById('chat-messages');
-    const el = document.createElement('div');
-    el.className = `msg ${role}${isTyping ? ' typing' : ''}`;
-    el.textContent = text;
-    container.appendChild(el);
-    container.scrollTop = container.scrollHeight;
-    return el;
+  // Populate filter bin options
+  const binSet = new Set(dets.map(d => d.bin_id).filter(Boolean));
+  const sel    = document.getElementById('sv-filter-bin');
+  sel.innerHTML = '<option value="">All Bins</option>' + [...binSet].map(b => `<option>${b}</option>`).join('');
+
+  applyFilters();
+  await loadRoleData();
+}
+
+// ── FILTERS ───────────────────────────────────────
+function applyFilters() {
+  const typeF   = document.getElementById('sv-filter-type')?.value.toLowerCase() || '';
+  const resultF = document.getElementById('sv-filter-result')?.value;
+  const binF    = document.getElementById('sv-filter-bin')?.value || '';
+
+  let data = allDetections;
+  if (typeF)   data = data.filter(d => d.detected_label.toLowerCase() === typeF);
+  if (resultF !== '' && resultF !== undefined) data = data.filter(d => String(d.is_correct) === resultF);
+  if (binF)    data = data.filter(d => d.bin_id === binF);
+
+  renderTable(data, 'sv-table', false);
+}
+
+function renderTable(data, tbodyId, isAdmin=false) {
+  const tbody = document.getElementById(tbodyId);
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${isAdmin?8:6}" style="text-align:center;padding:28px;color:var(--muted)">No detections matching filter</td></tr>`;
+    return;
   }
+
+  tbody.innerHTML = data.map(d => {
+    const common = `
+      <td style="font-family:'Fira Code',monospace;font-size:10px;color:var(--muted)">${d.timestamp}</td>
+      <td><strong>${wEmoji(d.detected_label)} ${d.detected_label}</strong></td>
+      <td><span class="conf-pill ${confCls(d.confidence)}">${d.confidence}%</span></td>`;
+
+    if (isAdmin) {
+      return `<tr>${common}
+        <td style="font-family:'Fira Code',monospace;font-size:11px">${d.bin_id||'—'}</td>
+        <td style="font-size:12px;color:var(--muted)">${d.bin_label||'—'}</td>
+        <td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--muted)">${d.device_id||'—'}</td>
+        <td style="font-size:11px;color:var(--muted)">${d.location||'—'}</td>
+        <td><span class="badge ${d.is_correct?'ok':'err'}">${d.is_correct?'✓':'✗'} ${d.is_correct?'Correct':'Wrong'}</span></td>
+      </tr>`;
+    }
+    return `<tr>${common}
+      <td style="font-size:12px;color:var(--muted)">${d.bin_label||'—'}</td>
+      <td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--muted)">${d.device_id||'—'}</td>
+      <td><span class="badge ${d.is_correct?'ok':'err'}">${d.is_correct?'✓':'✗'} ${d.is_correct?'Correct':'Wrong'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── ROLE DATA ─────────────────────────────────────
+async function loadRoleData() {
+  if (currentRole === 'supervisor') await loadSupervisor();
+  if (currentRole === 'collector')  await loadCollector();
+  if (currentRole === 'admin')      await loadAdmin();
+}
+
+// ── SUPERVISOR ────────────────────────────────────
+async function loadSupervisor() {
+  const bins = await fetch('/api/bins').then(r => r.json());
+  document.getElementById('sv-bin-cards').innerHTML = bins.map(b => {
+    const cls = b.accuracy >= 80 ? 'good' : 'bad';
+    const wrongChips = (b.wrong_types||[]).map(w => `<span class="wrong-chip">${w.label} ×${w.count}</span>`).join('');
+    return `
+      <div class="bin-card" onclick="openBinModal('${b.bin_id}')">
+        <div class="bin-card-header">
+          <div>
+            <div class="bin-card-name">${b.bin_id}</div>
+            <div class="bin-card-type">${b.bin_type.toUpperCase()} · ${b.location}</div>
+          </div>
+          <span class="status-pill ${b.status}">${b.status}</span>
+        </div>
+        <div class="bin-acc ${cls}">${b.accuracy}%</div>
+        <div class="bin-counts">${b.correct} correct · ${b.wrong} wrong · ${b.total} total</div>
+        <hr class="divider">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Wrong items in this bin:</div>
+        <div class="wrong-chips">${wrongChips || '<span class="no-wrong">✓ None recorded</span>'}</div>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted)">📡 ${b.device_id} · Click for details →</div>
+      </div>`;
+  }).join('');
+}
+
+// ── BIN MODAL ─────────────────────────────────────
+async function openBinModal(binId) {
+  const data = await fetch(`/api/bins/${binId}`).then(r => r.json());
+
+  document.getElementById('modal-title').textContent = `${binId} — ${data.bin_type.toUpperCase()} Bin`;
+
+  document.getElementById('modal-stats').innerHTML = `
+    <div class="modal-stat">
+      <div class="modal-stat-val" style="color:var(--blue)">${data.total}</div>
+      <div class="modal-stat-label">Total Detections</div>
+    </div>
+    <div class="modal-stat">
+      <div class="modal-stat-val" style="color:var(--green)">${data.correct}</div>
+      <div class="modal-stat-label">Correct</div>
+    </div>
+    <div class="modal-stat">
+      <div class="modal-stat-val" style="color:${data.accuracy>=80?'var(--green)':'var(--red)'}">${data.accuracy}%</div>
+      <div class="modal-stat-label">Accuracy</div>
+    </div>`;
+
+  document.getElementById('modal-wrong-types').innerHTML =
+    (data.wrong_by_type||[]).map(w => `<span class="wrong-chip">${w.label} ×${w.count}</span>`).join('') ||
+    '<span class="no-wrong">✓ No wrong disposals</span>';
+
+  document.getElementById('modal-table').innerHTML = (data.recent_events||[]).map(e => `
+    <tr>
+      <td style="font-family:'Fira Code',monospace;font-size:10px;color:var(--muted)">${e.timestamp}</td>
+      <td><strong>${wEmoji(e.detected_label)} ${e.detected_label}</strong></td>
+      <td><span class="conf-pill ${confCls(e.confidence)}">${e.confidence}%</span></td>
+      <td><span class="badge ${e.is_correct?'ok':'err'}">${e.is_correct?'✓ Correct':'✗ Wrong'}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('bin-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('bin-modal').classList.remove('open');
+}
+
+document.getElementById('bin-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('bin-modal')) closeModal();
+});
+
+// ── COLLECTOR ─────────────────────────────────────
+async function loadCollector() {
+  const [bins, dets] = await Promise.all([
+    fetch('/api/bins').then(r => r.json()),
+    fetch('/api/detections').then(r => r.json()),
+  ]);
+
+  // Bin status cards
+  document.getElementById('col-bin-cards').innerHTML = bins.map(b => {
+    const cls = b.accuracy >= 80 ? 'good' : 'bad';
+    return `
+      <div class="bin-card">
+        <div class="bin-card-header">
+          <div>
+            <div class="bin-card-name">${b.bin_id}</div>
+            <div class="bin-card-type">${b.bin_type.toUpperCase()} Bin</div>
+          </div>
+          <span class="status-pill ${b.status}">${b.status}</span>
+        </div>
+        <div class="bin-acc ${cls}">${b.accuracy}%</div>
+        <div class="bin-counts">${b.correct} correct · ${b.wrong} wrong</div>
+        <hr class="divider">
+        <div style="font-size:12px;color:var(--muted)">📍 ${b.location}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">📡 Device: ${b.device_id}</div>
+      </div>`;
+  }).join('');
+
+  // Alerts
+  const alerts = bins.map(b => {
+    if (b.status === 'offline') return `<div class="alert-row danger"><span class="alert-icon">🔴</span><div><strong>${b.bin_id}</strong> is OFFLINE — Check device connection</div></div>`;
+    if (b.wrong > 10) return `<div class="alert-row danger"><span class="alert-icon">⚠️</span><div><strong>${b.bin_id}</strong> — High wrong disposal rate (${b.wrong} cases). Check signage!</div></div>`;
+    if (b.wrong > 5)  return `<div class="alert-row warn"><span class="alert-icon">⚡</span><div><strong>${b.bin_id}</strong> — ${b.wrong} wrong disposals. Monitor closely.</div></div>`;
+    return `<div class="alert-row success"><span class="alert-icon">✅</span><div><strong>${b.bin_id}</strong> — Operating normally (${b.accuracy}% accuracy)</div></div>`;
+  });
+  alerts.push(`<div class="alert-row info"><span class="alert-icon">📡</span><div>All connected devices reporting</div></div>`);
+  document.getElementById('col-alerts').innerHTML = alerts.join('');
+
+  // Recent events
+  document.getElementById('col-events').innerHTML = dets.slice(0,6).map(d => `
+    <div class="alert-row ${d.is_correct?'success':'danger'}">
+      <span class="alert-icon">${d.is_correct?'✅':'❌'}</span>
+      <div>
+        <strong>${d.detected_label}</strong> — ${d.confidence}% confidence<br>
+        <span style="font-size:10px;opacity:0.7;font-family:'Fira Code',monospace">${d.timestamp}</span>
+      </div>
+    </div>`).join('');
+
+  // Today's summary
+  const today = new Date().toDateString();
+  const todayDets = dets.filter(d => new Date(d.timestamp).toDateString() === today);
+  const todayCorrect = todayDets.filter(d => d.is_correct).length;
+  document.getElementById('col-today').innerHTML = `
+    <div class="kpi">
+      <div class="kpi-label">Today's Detections</div>
+      <div class="kpi-value blue">${todayDets.length}</div>
+      <div class="kpi-sub">Since midnight</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Correct Today</div>
+      <div class="kpi-value green">${todayCorrect}</div>
+      <div class="kpi-sub">${todayDets.length ? ((todayCorrect/todayDets.length*100).toFixed(1)) : 0}% accuracy</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Wrong Today</div>
+      <div class="kpi-value red">${todayDets.length - todayCorrect}</div>
+      <div class="kpi-sub">Need attention</div>
+    </div>`;
+}
+
+// ── ADMIN ─────────────────────────────────────────
+async function loadAdmin() {
+  const [devices, materials, urban] = await Promise.all([
+    fetch('/api/devices').then(r => r.json()),
+    fetch('/api/csv/by-material').then(r => r.json()),
+    fetch('/api/csv/urban-rural').then(r => r.json()),
+  ]);
+
+  // Admin type chart
+  if (allDetections.length > 0) {
+    const labelCounts = {};
+    allDetections.forEach(d => { labelCounts[d.detected_label] = (labelCounts[d.detected_label]||0)+1; });
+    const lk = Object.keys(labelCounts), lv = Object.values(labelCounts);
+    if (admTypeChart) { admTypeChart.data.labels=lk; admTypeChart.data.datasets[0].data=lv; admTypeChart.update(); }
+    else admTypeChart = new Chart(document.getElementById('adm-type-chart'), {
+      type:'bar', data:{labels:lk,datasets:[{data:lv,backgroundColor:COLORS.slice(0,lk.length),borderRadius:8,borderSkipped:false}]},
+      options:chartOpts()
+    });
+  }
+
+  // Device table
+  document.getElementById('adm-devices').innerHTML = `
+    <table class="device-table">
+      <thead><tr>
+        <th>Device ID</th><th>Bin</th><th>Location</th>
+        <th>Status</th><th>Events</th><th>Last Seen</th>
+      </tr></thead>
+      <tbody>
+        ${devices.map(d=>`
+          <tr>
+            <td style="font-family:'Fira Code',monospace;font-size:12px">${d.device_id}</td>
+            <td>${d.bin_id}</td>
+            <td style="font-size:12px;color:var(--muted)">${d.location}</td>
+            <td>
+              <div class="device-status">
+                <div class="device-dot ${d.status}"></div>
+                ${d.status}
+              </div>
+            </td>
+            <td style="font-family:'Fira Code',monospace;font-size:12px">${d.total_events}</td>
+            <td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--muted)">${d.last_seen}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  // Material charts
+  if (admMatChart) admMatChart.destroy();
+  admMatChart = new Chart(document.getElementById('adm-material-chart'), {
+    type:'bar',
+    data:{labels:materials.map(m=>m.material_type),datasets:[{label:'Wrong %',data:materials.map(m=>m.wrong_disposal_rate_percent),backgroundColor:COLORS_RED,borderRadius:8}]},
+    options:chartOpts()
+  });
+
+  if (admRecycChart) admRecycChart.destroy();
+  admRecycChart = new Chart(document.getElementById('adm-recycling-chart'), {
+    type:'bar',
+    data:{labels:materials.map(m=>m.material_type),datasets:[{label:'Recycling %',data:materials.map(m=>m.recycling_rate_percent),backgroundColor:COLORS_GREEN,borderRadius:8}]},
+    options:chartOpts()
+  });
+
+  if (admUrbanChart) admUrbanChart.destroy();
+  admUrbanChart = new Chart(document.getElementById('adm-urban-chart'), {
+    type:'bar',
+    data:{
+      labels:urban.map(u=>u.urban_rural),
+      datasets:[
+        {label:'Correct %',data:urban.map(u=>u.correctly_segregated_percent),backgroundColor:'#00D98B',borderRadius:8},
+        {label:'Wrong %',  data:urban.map(u=>u.wrong_disposal_rate_percent),  backgroundColor:'#FF4D6A',borderRadius:8},
+      ]
+    },
+    options:chartOpts(true)
+  });
+
+  renderTable(allDetections, 'adm-table', true);
+}
+
+// ── CHATBOT ───────────────────────────────────────
+function toggleChat() {
+  document.getElementById('chat-box').classList.toggle('open');
+}
+
+function quickAsk(el) {
+  document.getElementById('chat-input').value = el.textContent;
+  sendMsg();
+}
+
+async function sendMsg() {
+  const input = document.getElementById('chat-input');
+  const msg   = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  addMsg('user', msg);
+  chatHistory.push({ role:'user', content:msg });
+  const typing = addMsg('bot', 'Thinking...', true);
+
+  try {
+    const res  = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ messages: chatHistory, role: currentRole })
+    });
+    const data = await res.json();
+    const reply = data.reply || 'Could not get a response.';
+    typing.remove();
+    addMsg('bot', reply);
+    chatHistory.push({ role:'assistant', content:reply });
+  } catch {
+    typing.remove();
+    addMsg('bot', 'Connection error. Please try again.');
+  }
+}
+
+function addMsg(role, text, typing=false) {
+  const el = document.createElement('div');
+  el.className = `cmsg ${role}${typing ? ' typing' : ''}`;
+  el.textContent = text;
+  const msgs = document.getElementById('chat-msgs');
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+// ── REFRESH ───────────────────────────────────────
+async function refresh() {
+  await loadAll();
+}
+
+refresh();
+setInterval(refresh, 5000);
+switchRole('supervisor');
 </script>
-
 </body>
 </html>

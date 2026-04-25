@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WasteVision — Smart City Analytics Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0C0E16;
+      --surface: #13161F;
+      --card:    #1A1D2B;
+      --border:  #252838;
+      --text:    #E4E8F0;
+      --muted:   #55607A;
+      --green:   #00E096;
+      --blue:    #4B8BFF;
+      --purple:  #9B6EFF;
+      --orange:  #FF9330;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── GRID BG ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,224,150,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,224,150,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── GLOW ── */
+    .glow {
+      position: fixed;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,224,150,0.06) 0%, transparent 70%);
+      top: -200px; left: -200px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .glow2 {
+      position: fixed;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(75,139,255,0.05) 0%, transparent 70%);
+      bottom: -150px; right: -150px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative; z-index: 10;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 20px 48px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(12,14,22,0.8);
+      backdrop-filter: blur(20px);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: var(--green);
+      border-radius: 9px;
+      display: flex; align-items: center;
+      justify-content: center;
+      font-size: 16px; color: #000;
+    }
+
+    .logo .g { color: var(--green); }
+
+    .header-tag {
+      font-family: 'Fira Code', monospace;
+      font-size: 11px; color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 5px 12px; border-radius: 7px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 80px 24px 60px;
+    }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(0,224,150,0.08);
+      border: 1px solid rgba(0,224,150,0.2);
+      border-radius: 99px;
+      padding: 6px 16px;
+      font-size: 12px; font-weight: 600;
+      color: var(--green);
+      font-family: 'Fira Code', monospace;
+      margin-bottom: 28px;
+    }
+
+    .hero-dot {
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity:1; box-shadow: 0 0 6px var(--green); }
+      50% { opacity: 0.4; box-shadow: none; }
+    }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(36px, 6vw, 72px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 .g { color: var(--green); }
+
+    .hero p {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto 48px;
+      line-height: 1.7;
+    }
+
+    /* ── CARDS GRID ── */
+    .cards-section {
+      position: relative; z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    .section-label {
+      text-align: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    /* ── MODULE CARD ── */
+    .module-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px;
+      text-decoration: none;
+      color: var(--text);
+      display: block;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+      cursor: pointer;
+    }
+
+    .module-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-color, var(--green));
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .module-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--card-color, var(--green));
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .module-card:hover::before { opacity: 1; }
+
+    /* BG NUMBER */
+    .module-card .bg-num {
+      position: absolute;
+      right: 24px; bottom: 16px;
+      font-family: 'Syne', sans-serif;
+      font-size: 100px; font-weight: 800;
+      color: var(--card-color, var(--green));
+      opacity: 0.04;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .card-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      display: flex; align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      transition: background 0.25s;
+    }
+
+    .module-card:hover .card-icon {
+      background: rgba(255,255,255,0.07);
+    }
+
+    .card-number {
+      font-family: 'Fira Code', monospace;
+      font-size: 10px;
+      color: var(--card-color, var(--green));
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .card-member {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 24px;
+    }
+
+    .card-tags {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 24px;
+    }
+
+    .tag {
+      font-size: 10px; font-weight: 700;
+      font-family: 'Fira Code', monospace;
+      padding: 3px 9px; border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .card-link {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 13px; font-weight: 700;
+      color: var(--card-color, var(--green));
+      transition: gap 0.2s;
+    }
+
+    .module-card:hover .card-link { gap: 12px; }
+
+    .card-arrow {
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+
+    .module-card:hover .card-arrow { transform: translateX(4px); }
+
+    /* STATUS BADGE */
+    .card-status {
+      position: absolute;
+      top: 20px; right: 20px;
+      font-size: 10px; font-weight: 700;
+      font-family: 'Fira Code', monospace;
+      padding: 4px 10px; border-radius: 99px;
+    }
+
+    .card-status.live    { background: rgba(0,224,150,0.1); color: var(--green); border: 1px solid rgba(0,224,150,0.2); }
+    .card-status.pending { background: rgba(255,147,48,0.1); color: var(--orange); border: 1px solid rgba(255,147,48,0.2); }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 32px;
+      border-top: 1px solid var(--border);
+      font-family: 'Fira Code', monospace;
+      font-size: 11px; color: var(--muted);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .cards-grid { grid-template-columns: 1fr; }
+      header { padding: 16px 20px; }
+      .hero { padding: 48px 20px 40px; }
+      .hero h1 { font-size: 36px; letter-spacing: -1px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="glow"></div>
+<div class="glow2"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">♻️</div>
+    Waste<span class="g">Vision</span>
+  </div>
+  <div class="header-tag">IT4031 · Smart City Analytics · Group 04</div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">
+    <div class="hero-dot"></div>
+    LIVE PLATFORM
+  </div>
+  <h1>Smart City<br><span class="g">Waste Intelligence</span></h1>
+  <p>A unified visual analytics platform for real-time waste management monitoring, segregation accuracy, and data-driven decision making.</p>
+</div>
+
+<!-- CARDS -->
+<div class="cards-section">
+  <div class="section-label">Select a Module to Explore</div>
+
+  <div class="cards-grid">
+
+    <!-- CARD 1 — YOUR MODULE -->
+    <a class="module-card" href="https://waste-classifier-s20k.onrender.com" target="_blank"
+       style="--card-color: var(--green)">
+      <span class="card-status live">● LIVE</span>
+      <div class="bg-num">01</div>
+      <div class="card-icon">♻️</div>
+      <div class="card-number">Module 01</div>
+      <div class="card-title">Waste Segregation Detection</div>
+      <div class="card-desc">
+        Real-time IoT waste classification system using computer vision. Detects and validates correct waste disposal across plastic, paper, glass, and metal categories.
+      </div>
+      <div class="card-tags">
+        <span class="tag">IoT</span>
+        <span class="tag">ML</span>
+        <span class="tag">MongoDB</span>
+        <span class="tag">ESP32-CAM</span>
+        <span class="tag">EfficientNetB0</span>
+      </div>
+      <div class="card-link">
+        Open Dashboard <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- CARD 2 -->
+    <a class="module-card" href="https://smartbin-ui.vercel.app/" target="_blank"
+       style="--card-color: var(--blue)">
+      <span class="card-status live">● LIVE</span>
+      <div class="bg-num">02</div>
+      <div class="card-icon">🔒</div>
+      <div class="card-number">Module 02</div>
+      <div class="card-title">Bin Security & Secure Access</div>
+      <div class="card-desc">
+        Smart bin access control and security monitoring system. Ensures authorized waste disposal and tracks access events across bin locations.
+      </div>
+      <div class="card-tags">
+        <span class="tag">Security</span>
+        <span class="tag">Access Control</span>
+        <span class="tag">Smart Bin</span>
+      </div>
+      <div class="card-link">
+        Open Dashboard <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- CARD 3 -->
+    <a class="module-card" href="https://smart-waste-dashboard-git-main-anupama3.vercel.app/" target="_blank"
+       style="--card-color: var(--purple)">
+      <span class="card-status live">● LIVE</span>
+      <div class="bg-num">03</div>
+      <div class="card-icon">👃</div>
+      <div class="card-number">Module 03</div>
+      <div class="card-title">Odour Risk Detection</div>
+      <div class="card-desc">
+        Environmental monitoring system for odour and gas risk detection around waste bins. Provides real-time alerts and risk analysis for waste management teams.
+      </div>
+      <div class="card-tags">
+        <span class="tag">Sensors</span>
+        <span class="tag">Risk Analysis</span>
+        <span class="tag">Environment</span>
+      </div>
+      <div class="card-link">
+        Open Dashboard <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- CARD 4 -->
+    <a class="module-card" href="MEMBER_4_URL_HERE" target="_blank"
+       style="--card-color: var(--orange)">
+      <span class="card-status pending">⏳ PENDING</span>
+      <div class="bg-num">04</div>
+      <div class="card-icon">🔮</div>
+      <div class="card-number">Module 04</div>
+      <div class="card-title">Module Title Here</div>
+      <div class="card-desc">
+        Description of this module. Replace this text and the URL above when the deployment is ready.
+      </div>
+      <div class="card-tags">
+        <span class="tag">Analytics</span>
+        <span class="tag">Dashboard</span>
+      </div>
+      <div class="card-link">
+        Open Dashboard <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<footer>
+  IT4031 · Visual Analytics & UX Design · Group 04 · SLIIT · 2026
+</footer>
+
+</body>
+</html>
