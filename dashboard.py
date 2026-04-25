@@ -16,7 +16,7 @@ db              = client['waste_classifier']
 collection      = db['detections']
 
 # ─── OPENROUTER (Chatbot) ─────────────────────────────
-OPENROUTER_KEY  = os.environ.get('OPENROUTER_API_KEY', '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')
+OPENROUTER_KEY = os.environ.get('OPENROUTER_API_KEY', '')
 
 # ─── CSV DATASET ──────────────────────────────────────
 CSV_PATH = os.path.join(os.path.dirname(__file__), 'waste_segregation_sl.csv')
